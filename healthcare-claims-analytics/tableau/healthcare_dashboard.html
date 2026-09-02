@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthcare Insurance Claims Analytics Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0A0F1E;
+    color: #E8EDF5;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: -0.3px;
+  }
+
+  .header-left p {
+    font-size: 13px;
+    color: #6B7A99;
+    margin-top: 4px;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+
+  .badge-blue { background: rgba(56,138,221,0.12); color: #74B3F0; border-color: rgba(56,138,221,0.25); }
+  .badge-green { background: rgba(29,158,117,0.12); color: #5DCAA5; border-color: rgba(29,158,117,0.25); }
+  .badge-amber { background: rgba(239,159,39,0.12); color: #FAC775; border-color: rgba(239,159,39,0.25); }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .kpi-card {
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .kpi-card.blue::before { background: linear-gradient(90deg, #185FA5, #378ADD); }
+  .kpi-card.teal::before { background: linear-gradient(90deg, #0F6E56, #1D9E75); }
+  .kpi-card.amber::before { background: linear-gradient(90deg, #854F0B, #EF9F27); }
+  .kpi-card.coral::before { background: linear-gradient(90deg, #993C1D, #D85A30); }
+
+  .kpi-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 14px;
+  }
+
+  .kpi-card.blue .kpi-icon { background: rgba(56,138,221,0.15); }
+  .kpi-card.teal .kpi-icon { background: rgba(29,158,117,0.15); }
+  .kpi-card.amber .kpi-icon { background: rgba(239,159,39,0.15); }
+  .kpi-card.coral .kpi-icon { background: rgba(216,90,48,0.15); }
+
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #6B7A99;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: -0.5px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: #4A5568;
+    margin-top: 6px;
+  }
+
+  /* CHART GRID */
+  .chart-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-grid-3 {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-card {
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #C5CDE0;
+  }
+
+  .chart-meta {
+    font-size: 11px;
+    color: #4A5568;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* HORIZONTAL BAR CHARTS */
+  .bar-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .bar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bar-name {
+    font-size: 12px;
+    color: #8A95AA;
+    width: 110px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .bar-track {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border-radius: 4px;
+    height: 22px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    transition: width 1s ease;
+  }
+
+  .bar-val {
+    font-size: 10px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+
+  /* LINE CHART */
+  .line-chart-wrap { position: relative; }
+
+  .line-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  .legend-label {
+    font-size: 11px;
+    color: #6B7A99;
+    vertical-align: middle;
+  }
+
+  /* DONUT CHART */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    height: 160px;
+  }
+
+  .donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .donut-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .donut-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .donut-info { display: flex; flex-direction: column; }
+
+  .donut-type {
+    font-size: 12px;
+    color: #8A95AA;
+  }
+
+  .donut-count {
+    font-size: 15px;
+    font-weight: 600;
+    color: #E8EDF5;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .donut-pct {
+    font-size: 11px;
+    color: #4A5568;
+  }
+
+  /* ANOMALY TABLE */
+  .anomaly-table { width: 100%; border-collapse: collapse; }
+
+  .anomaly-table th {
+    font-size: 10px;
+    font-weight: 500;
+    color: #4A5568;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: left;
+    padding: 0 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .anomaly-table td {
+    font-size: 12px;
+    color: #8A95AA;
+    padding: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .anomaly-table td:first-child { color: #C5CDE0; }
+
+  .flag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .flag-high { background: rgba(162,45,45,0.2); color: #F09595; }
+  .flag-normal { background: rgba(29,158,117,0.15); color: #5DCAA5; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-left { font-size: 11px; color: #4A5568; }
+  .footer-right { font-size: 11px; color: #4A5568; font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Healthcare Insurance Claims Analytics</h1>
+      <p>May 2019 – May 2024 &nbsp;·&nbsp; 54,860 records &nbsp;·&nbsp; 5 insurers &nbsp;·&nbsp; 6 medical conditions</p>
+    </div>
+    <div class="header-right">
+      <span class="badge badge-blue">SQL · PostgreSQL</span>
+      <span class="badge badge-green">Python · Pandas</span>
+      <span class="badge badge-amber">Tableau</span>
+    </div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-label">Total Claims</div>
+      <div class="kpi-value">54,860</div>
+      <div class="kpi-sub">After removing 534 duplicates</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Total Billing Portfolio</div>
+      <div class="kpi-value">$1.40B</div>
+      <div class="kpi-sub">Across all 5 insurers</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-label">Avg Billing / Patient</div>
+      <div class="kpi-value">$25,594</div>
+      <div class="kpi-sub">Per claim value</div>
+    </div>
+    <div class="kpi-card coral">
+      <div class="kpi-icon">🏥</div>
+      <div class="kpi-label">Avg Length of Stay</div>
+      <div class="kpi-value">15.5 days</div>
+      <div class="kpi-sub">Across all conditions</div>
+    </div>
+  </div>
+
+  <!-- BAR CHARTS ROW -->
+  <div class="chart-grid-2">
+
+    <!-- Billing by Insurer -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Total billing by insurance provider</span>
+        <span class="chart-meta">$M</span>
+      </div>
+      <div class="bar-list">
+        <div class="bar-item">
+          <span class="bar-name">Cigna</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:100%; background: linear-gradient(90deg,#185FA5,#378ADD)">
+              <span class="bar-val" style="color:#E6F1FB">$287M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">Medicare</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:99%; background: linear-gradient(90deg,#1a6ab0,#4090d6)">
+              <span class="bar-val" style="color:#E6F1FB">$285M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">Blue Cross</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:98%; background: linear-gradient(90deg,#1c74bb,#5DCAA5)">
+              <span class="bar-val" style="color:#E6F1FB">$283M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">UnitedHealth</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:97%; background: linear-gradient(90deg,#0F6E56,#1D9E75)">
+              <span class="bar-val" style="color:#E1F5EE">$282M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">Aetna</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:96%; background: linear-gradient(90deg,#154e8a,#2a7bc4)">
+              <span class="bar-val" style="color:#E6F1FB">$278M</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billing by Condition -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Total billing by medical condition</span>
+        <span class="chart-meta">$M</span>
+      </div>
+      <div class="bar-list">
+        <div class="bar-item">
+          <span class="bar-name">Diabetes</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:100%; background: linear-gradient(90deg,#854F0B,#EF9F27)">
+              <span class="bar-val" style="color:#FAEEDA">$238M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">Obesity</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:99%; background: linear-gradient(90deg,#7a480a,#d98e22)">
+              <span class="bar-val" style="color:#FAEEDA">$238M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">Arthritis</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:99%; background: linear-gradient(90deg,#714209,#c47e1e)">
+              <span class="bar-val" style="color:#FAEEDA">$237M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">Hypertension</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:98%; background: linear-gradient(90deg,#683c08,#b06e1a)">
+              <span class="bar-val" style="color:#FAEEDA">$235M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">Asthma</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:98%; background: linear-gradient(90deg,#5e3607,#9c5e16)">
+              <span class="bar-val" style="color:#FAEEDA">$235M</span>
+            </div>
+          </div>
+        </div>
+        <div class="bar-item">
+          <span class="bar-name">Cancer</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:97%; background: linear-gradient(90deg,#543006,#884f12)">
+              <span class="bar-val" style="color:#FAEEDA">$232M</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TREND + DONUT ROW -->
+  <div class="chart-grid-3">
+
+    <!-- Monthly Trend Line -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Monthly admission trends (2019 – 2024)</span>
+        <span class="chart-meta">by admission type</span>
+      </div>
+      <div class="line-chart-wrap">
+        <svg viewBox="0 0 560 120" width="100%" style="overflow:visible">
+          <!-- Grid lines -->
+          <line x1="0" y1="20" x2="560" y2="20" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+          <line x1="0" y1="50" x2="560" y2="50" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+          <line x1="0" y1="80" x2="560" y2="80" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+          <line x1="0" y1="105" x2="560" y2="105" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <!-- Y labels -->
+          <text x="0" y="23" font-size="9" fill="#4A5568" font-family="DM Mono">1K</text>
+          <text x="0" y="53" font-size="9" fill="#4A5568" font-family="DM Mono">800</text>
+          <text x="0" y="83" font-size="9" fill="#4A5568" font-family="DM Mono">600</text>
+          <!-- Elective line -->
+          <polyline points="20,65 40,50 60,48 80,52 100,47 120,53 140,49 160,54 180,50 200,55 220,48 240,72 260,52 280,50 300,54 320,51 340,55 360,52 380,48 400,53 420,50 440,55 460,51 480,48 500,52 520,50 540,60 555,95" fill="none" stroke="#378ADD" stroke-width="2" stroke-linejoin="round"/>
+          <!-- Emergency line -->
+          <polyline points="20,67 40,52 60,50 80,54 100,49 120,55 140,51 160,56 180,52 200,57 220,50 240,74 260,54 280,52 300,56 320,53 340,57 360,54 380,50 400,55 420,52 440,57 460,53 480,50 500,54 520,52 540,62 555,97" fill="none" stroke="#5DCAA5" stroke-width="2" stroke-linejoin="round"/>
+          <!-- Urgent line -->
+          <polyline points="20,66 40,51 60,49 80,53 100,48 120,54 140,50 160,55 180,51 200,56 220,49 240,73 260,53 280,51 300,55 320,52 340,56 360,53 380,49 400,54 420,51 440,56 460,52 480,49 500,53 520,51 540,61 555,96" fill="none" stroke="#EF9F27" stroke-width="2" stroke-linejoin="round"/>
+          <!-- Feb 2022 dip annotation -->
+          <line x1="240" y1="20" x2="240" y2="105" stroke="rgba(242,75,74,0.3)" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="242" y="30" font-size="8" fill="#E24B4A" font-family="DM Sans">Feb 2022 dip</text>
+          <!-- X axis labels -->
+          <text x="20" y="118" font-size="9" fill="#4A5568" font-family="DM Mono">2019</text>
+          <text x="130" y="118" font-size="9" fill="#4A5568" font-family="DM Mono">2020</text>
+          <text x="240" y="118" font-size="9" fill="#4A5568" font-family="DM Mono">2021</text>
+          <text x="350" y="118" font-size="9" fill="#4A5568" font-family="DM Mono">2022</text>
+          <text x="460" y="118" font-size="9" fill="#4A5568" font-family="DM Mono">2024</text>
+        </svg>
+      </div>
+      <div class="line-legend">
+        <span><span class="legend-dot" style="background:#378ADD"></span><span class="legend-label">Elective</span></span>
+        <span><span class="legend-dot" style="background:#5DCAA5"></span><span class="legend-label">Emergency</span></span>
+        <span><span class="legend-dot" style="background:#EF9F27"></span><span class="legend-label">Urgent</span></span>
+      </div>
+    </div>
+
+    <!-- Donut Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Admission type breakdown</span>
+      </div>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 120 120" width="120" height="120">
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#378ADD" stroke-width="22" stroke-dasharray="94.2 188.4" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#5DCAA5" stroke-width="22" stroke-dasharray="94.2 188.4" stroke-dashoffset="-94.2" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#EF9F27" stroke-width="22" stroke-dasharray="94.2 188.4" stroke-dashoffset="-188.4" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="34" fill="#111827"/>
+          <text x="60" y="56" font-size="13" font-weight="600" fill="#FFFFFF" text-anchor="middle" font-family="DM Mono">33%</text>
+          <text x="60" y="70" font-size="8" fill="#6B7A99" text-anchor="middle" font-family="DM Sans">each type</text>
+        </svg>
+        <div class="donut-legend">
+          <div class="donut-legend-item">
+            <div class="donut-dot" style="background:#378ADD"></div>
+            <div class="donut-info">
+              <span class="donut-type">Elective</span>
+              <span class="donut-count">18,655</span>
+              <span class="donut-pct">33.6%</span>
+            </div>
+          </div>
+          <div class="donut-legend-item">
+            <div class="donut-dot" style="background:#5DCAA5"></div>
+            <div class="donut-info">
+              <span class="donut-type">Emergency</span>
+              <span class="donut-count">18,269</span>
+              <span class="donut-pct">32.9%</span>
+            </div>
+          </div>
+          <div class="donut-legend-item">
+            <div class="donut-dot" style="background:#EF9F27"></div>
+            <div class="donut-info">
+              <span class="donut-type">Urgent</span>
+              <span class="donut-count">18,576</span>
+              <span class="donut-pct">33.5%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANOMALY TABLE -->
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-header">
+      <span class="chart-title">Top billing anomalies flagged for review</span>
+      <span class="chart-meta">Z-score method · threshold &gt; 1 std dev</span>
+    </div>
+    <table class="anomaly-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Age</th>
+          <th>Condition</th>
+          <th>Insurer</th>
+          <th>Billing Amount</th>
+          <th>Z-Score</th>
+          <th>Flag</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Todd Carrilio</td><td>51</td><td>Hypertension</td><td>Blue Cross</td><td style="font-family:'DM Mono',monospace;color:#E8EDF5">$52,764</td><td style="font-family:'DM Mono',monospace">1.92</td><td><span class="flag flag-high">Review Required</span></td></tr>
+        <tr><td>Karen Kline</td><td>74</td><td>Cancer</td><td>UnitedHealthcare</td><td style="font-family:'DM Mono',monospace;color:#E8EDF5">$52,373</td><td style="font-family:'DM Mono',monospace">1.89</td><td><span class="flag flag-high">Review Required</span></td></tr>
+        <tr><td>Kathryn Gonzales</td><td>18</td><td>Diabetes</td><td>Aetna</td><td style="font-family:'DM Mono',monospace;color:#E8EDF5">$52,211</td><td style="font-family:'DM Mono',monospace">1.88</td><td><span class="flag flag-high">Review Required</span></td></tr>
+        <tr><td>David Sandoval</td><td>22</td><td>Hypertension</td><td>Blue Cross</td><td style="font-family:'DM Mono',monospace;color:#E8EDF5">$52,271</td><td style="font-family:'DM Mono',monospace">1.88</td><td><span class="flag flag-high">Review Required</span></td></tr>
+        <tr><td>Scott Powell</td><td>38</td><td>Cancer</td><td>Cigna</td><td style="font-family:'DM Mono',monospace;color:#E8EDF5">$52,102</td><td style="font-family:'DM Mono',monospace">1.87</td><td><span class="flag flag-high">Review Required</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">Dennis Njiru Aningu · Senior Data Analyst · github.com/NjiruDennis</div>
+    <div class="footer-right">PostgreSQL 18 · Python 3.12 · Tableau · Jupyter</div>
+  </div>
+
+</div>
+</body>
+</html>
